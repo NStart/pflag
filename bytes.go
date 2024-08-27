@@ -91,24 +91,73 @@ func BytesHexP(name, shorthand string, value []byte, usage string) *[]byte {
 	return CommandLine.BytesHexP(name, shorthand, value, usage)
 }
 
-type bytesBae64Value []byte 
+type bytesBase64Value []byte
 
-func (bytesBase64 bytesBae64Value) String() string {
+func (bytesBase64 bytesBase64Value) String() string {
 	return base64.StdEncoding.EncodeToString([]byte(bytesBase64))
 }
 
-func (bytesBse64 *bytesBae64Value) Set(value string) error {
+func (bytesBase64 *bytesBase64Value) Set(value string) error {
 	bin, err := base64.StdEncoding.DecodeString(strings.TrimSpace(value))
 
 	if err != nil {
 		return err
 	}
 
-	*bytesBse64 = bin
+	*bytesBase64 = bin
 
 	return nil
 }
 
+func (*bytesBase64Value) Type() string {
+	return "bytesBase64"
+}
 
+func newBytesBase64Value(val []byte, p *[]byte) *bytesBase64Value {
+	*p = val
+	return (*bytesBase64Value)(p)
+}
 
+func bytesBase64ValueConv(sval string) (interface{}, error) {
+	bin, err := base64.StdEncoding.DecodeString(sval)
+	if err == nil {
+		return bin, nil
+	}
 
+	return nil, fmt.Errorf("invalid string begin converted to Bytes: %s %s", sval, err)
+}
+
+func (f *FlagSet) GetBytesBase64(name string) ([]byte, error) {
+	val, err := f.getFlagType(name, "bytesBase64", bytesBase64ValueConv)
+
+	if err != nil {
+		return []byte{}, err
+	}
+
+	return val.([]byte), nil
+}
+
+func (f *FlagSet) BytesBase64Var(p *[]byte, name string, value []byte, usage string) {
+	f.VarP(newBytesBase64Value(value, p), name, "", usage)
+}
+
+// BytesBase64VarP is like BytesBase64Var, but accepts a shorthand letter that can be used after a single dash.
+func (f *FlagSet) BytesBase64VarP(p *[]byte, name, shorthand string, value []byte, usage string) {
+	f.VarP(newBytesBase64Value(value, p), name, shorthand, usage)
+}
+
+// BytesBase64Var defines an []byte flag with specified name, default value, and usage string.
+// The argument p points to an []byte variable in which to store the value of the flag.
+func BytesBase64Var(p *[]byte, name string, value []byte, usage string) {
+	CommandLine.VarP(newBytesBase64Value(value, p), name, "", usage)
+}
+
+// BytesBase64VarP is like BytesBase64Var, but accepts a shorthand letter that can be used after a single dash.
+func BytesBase64VarP(p *[]byte, name, shorthand string, value []byte, usage string) {
+	CommandLine.VarP(newBytesBase64Value(value, p), name, shorthand, usage)
+}
+
+func (f *FlagSet) BytesBase64(name string, value []byte, usage string) *[]byte {
+	p := new([]byte)
+	f.BytesBase64VarP(p, name, "",)
+}
